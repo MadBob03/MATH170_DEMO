@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib
+import matplotlib.pyplot as plt
 
-def colorize_fractal(fractal_array, colormap_name):
+def colorize_fractal(fractal_array: np.ndarray, colormap_name: str) -> np.ndarray:
     """
     Colorizes a 2D escape-time integer array using a matplotlib colormap.
 
@@ -36,3 +37,13 @@ def colorize_fractal(fractal_array, colormap_name):
     rgba_image = cmap(normalized)
 
     return rgba_image
+
+def save_image(image_array: np.ndarray, filename: str) -> None:
+    """
+    Saves the image array to a file.
+
+    Args:
+        image_array (np.ndarray): 3D RGBA array of shape (height, width, 4).
+        filename (str): The path to save the image to.
+    """
+    plt.imsave(filename, image_array)
