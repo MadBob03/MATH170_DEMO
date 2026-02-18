@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from unittest.mock import patch
 from fractalpy.render import colorize_fractal
 
 def test_colorize_fractal_returns_rgba_array():
@@ -28,3 +29,20 @@ def test_colorize_fractal_values_are_valid_floats():
     assert np.issubdtype(result.dtype, np.floating)
     assert np.all(result >= 0.0)
     assert np.all(result <= 1.0)
+
+def test_save_image_calls_imsave():
+    """Test that save_image calls matplotlib.pyplot.imsave with correct arguments."""
+    # Import inside test to avoid ImportError before implementation if strict TDD
+    from fractalpy.render import save_image
+
+    # Given a mock image array and a filename
+    mock_image = np.zeros((10, 10, 4))
+    filename = "test_fractal.png"
+
+    # When calling save_image with mocked imsave
+    with patch("matplotlib.pyplot.imsave") as mock_imsave:
+        save_image(mock_image, filename)
+
+        # Then imsave is called once with the filename and image
+        # Note: pyplot.imsave signature is (fname, arr, ...)
+        mock_imsave.assert_called_once_with(filename, mock_image)
