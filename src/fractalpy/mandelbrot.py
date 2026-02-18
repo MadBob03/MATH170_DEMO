@@ -1,17 +1,27 @@
 import numpy as np
 
-def generate_mandelbrot(resolution, max_iter):
-    """
-    Generates a Mandelbrot set for the region [-2.0, 2.0] for both real and imaginary parts.
+
+def generate_mandelbrot(resolution: int, max_iter: int) -> np.ndarray:
+    """Generates the Mandelbrot set visualization data.
+
+    The Mandelbrot set is a set of complex numbers $C$ for which the function
+    $Z_{n+1} = Z_n^2 + C$ does not diverge to infinity when iterated starting from $Z_0 = 0$.
+    Instead, it remains bounded.
+
+    To create the image, we check a grid of points on the complex plane. For each point $C$,
+    we repeatedly apply the formula. If the magnitude of $Z$ (its distance from the origin)
+    exceeds 2, we know it will escape to infinity, so it's not part of the set. The number
+    of iterations it takes to escape determines the color of that point in the image.
 
     Args:
-        resolution (int): The number of points along each axis (width and height).
-        max_iter (int): The maximum number of iterations.
+        resolution: The width and height of the square image in pixels.
+        max_iter: The maximum number of times to run the formula for each point.
+            Higher values provide more detail at the edges of the set.
 
     Returns:
-        numpy.ndarray: A 2D array of shape (resolution, resolution) containing the
-                       iteration count at which the point escaped. Points in the set
-                       will have the value max_iter.
+        A 2D NumPy array of integers with shape (resolution, resolution).
+        Each value represents the number of iterations a point remained bounded
+        (magnitude <= 2). Points within the Mandelbrot set will have the value `max_iter`.
     """
     # Create a grid of complex numbers
     # We use linspace to create evenly spaced points
@@ -32,16 +42,22 @@ def generate_mandelbrot(resolution, max_iter):
     # Initially all points are considered 'in' (mask = True).
     mask = np.ones(C.shape, dtype=bool)
 
-    for i in range(max_iter):
-        # Update Z only for points that haven't escaped
-        Z[mask] = Z[mask]**2 + C[mask]
+    # Pre-allocate a buffer for magnitude calculations to avoid creating new arrays in loop
+    abs_Z = np.empty(C.shape, dtype=float)
 
-        # Check condition for points currently in mask
-        # We only need to check the points that were processed
-        # This updates the mask in-place for the True values
-        mask[mask] = np.abs(Z[mask]) <= 2.0
+    for _ in range(max_iter):
+        # Update Z only for points that haven't escaped: Z = Z^2 + C
+        # We use in-place operations to save memory
+        np.square(Z, out=Z, where=mask)
+        np.add(Z, C, out=Z, where=mask)
 
-        # Increment the count for points that haven't escaped yet
-        fractal += mask
+        # Check condition for points currently in mask: |Z| <= 2.0
+        # Calculate magnitude into pre-allocated buffer
+        np.abs(Z, out=abs_Z, where=mask)
+        # Update mask in-place based on condition
+        np.less_equal(abs_Z, 2.0, out=mask, where=mask)
+
+        # Increment the count for points that remain bounded
+        np.add(fractal, 1, out=fractal, where=mask)
 
     return fractal
