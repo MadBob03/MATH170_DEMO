@@ -1,12 +1,18 @@
 import numpy as np
 
-def generate_julia(resolution, c, max_iter):
+def generate_julia(resolution: int, c: complex, max_iter: int) -> np.ndarray:
     """
-    Generates a Julia set using NumPy vectorization.
+    Generates a Julia set for a given complex parameter c.
+
+    The Julia set is the set of points in the complex plane that do not escape
+    to infinity under the iterative mapping Z = Z^2 + c. This function uses
+    the escape-time algorithm, returning the number of iterations before
+    the magnitude of Z exceeds 2.
 
     Args:
-        resolution (int): The width and height of the square grid.
-        c (complex): The constant parameter for the Julia set formula Z = Z^2 + c.
+        resolution (int): The number of points along each axis (width and height) of the square grid.
+                          The grid spans from -1.5 to 1.5 in both real and imaginary axes.
+        c (complex): The constant parameter for the Julia set formula.
         max_iter (int): The maximum number of iterations to perform.
 
     Returns:
@@ -40,8 +46,15 @@ def generate_julia(resolution, c, max_iter):
         Z[mask] = Z[mask]**2 + c
 
         # Check for escape condition |Z| > 2
-        # Use abs(Z) which computes the magnitude
-        escaped_now = (np.abs(Z) > 2) & mask
+        # Calculate magnitude only for points that haven't escaped yet to avoid unnecessary
+        # computation and potential warnings/overflows on already escaped points.
+        escaped_now = np.zeros(Z.shape, dtype=bool)
+
+        # We use a temporary boolean array for the subset of points
+        subset_escaped = np.abs(Z[mask]) > 2
+
+        # Update the main escaped_now mask using the subset
+        escaped_now[mask] = subset_escaped
 
         # Record the iteration number for points that just escaped
         escape_times[escaped_now] = i
